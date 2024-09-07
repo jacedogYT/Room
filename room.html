@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Room</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        .room {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-color: #e0e0e0;
+        }
+        .object {
+            width: 100px;
+            height: 100px;
+            position: absolute;
+            background-color: #3498db;
+            cursor: grab;
+        }
+        .object:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body>
+    <div class="room">
+        <div class="object" id="object1" style="top: 50px; left: 50px;"></div>
+        <div class="object" id="object2" style="top: 200px; left: 200px;"></div>
+    </div>
+
+    <script>
+        let draggedElement = null;
+
+        document.querySelectorAll('.object').forEach(item => {
+            item.addEventListener('mousedown', function(event) {
+                draggedElement = item;
+                item.style.zIndex = 1000;
+            });
+
+            item.addEventListener('mouseup', function() {
+                draggedElement = null;
+                item.style.zIndex = '';
+            });
+        });
+
+        document.addEventListener('mousemove', function(event) {
+            if (draggedElement) {
+                const roomRect = document.querySelector('.room').getBoundingClientRect();
+                const x = event.clientX - roomRect.left;
+                const y = event.clientY - roomRect.top;
+                draggedElement.style.left = `${x - draggedElement.offsetWidth / 2}px`;
+                draggedElement.style.top = `${y - draggedElement.offsetHeight / 2}px`;
+            }
+        });
+    </script>
+</body>
+</html>

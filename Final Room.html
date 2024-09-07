@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Room</title>
+    <style>
+        .room {
+            position: relative;
+            width: 80vw;
+            height: 80vh;
+            border: 1px solid #000;
+            background-color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        .object {
+            position: absolute;
+            cursor: move;
+            background-color: transparent;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .circle {
+            border-radius: 50%;
+        }
+
+        .star {
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+
+        .isosceles-trapezoid {
+            width: 0;
+            height: 0;
+            border-left: 50px solid transparent;
+            border-right: 50px solid transparent;
+            border-bottom: 100px solid lightgreen;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+
+        .polygon {
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        }
+
+        #backgroundOptions, #shapeOptions {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            border: 1px solid #000;
+            background: #fff;
+            z-index: 1000;
+        }
+
+        #shapeOptions {
+            top: 50px;
+        }
+
+        #backgroundOptions input, #shapeOptions input, #shapeOptions select {
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <button id="addImageButton">Add Image</button>
+    <input type="text" id="imageUrlInput" placeholder="Image URL">
+    <button id="duplicateButton">Duplicate</button>
+    <button id="removeButton">Remove</button>
+    <button id="changeBgButton">Change Background</button>
+    <button id="resetBgButton">Reset Background</button>
+    <button id="shapeOptionsButton">Shape Options</button>
+    <button id="addShapeButton">Add Shape</button>
+    <button id="clearRoomButton">Clear Room</button>
+
+    <div id="shapeOptions">
+        <label for="shapeSelect">Select Shape:</label>
+        <select id="shapeSelect">
+            <option value="circle">Circle</option>
+            <option value="star">Star</option>
+            <option value="isosceles-trapezoid">Isosceles Trapezoid</option>
+            <option value="polygon">Polygon</option>
+        </select>
+        <label for="colorSelect">Select Color:</label>
+        <input type="color" id="colorSelect" value="#ff0000">
+        <label for="imageSelect">Background Image URL:</label>
+        <input type="text" id="imageSelect" placeholder="Background Image URL">
+    </div>
+
+    <div id="backgroundOptions">
+        <label for="bgColorInput">Background Color:</label>
+        <input type="color" id="bgColorInput" value="#e0e0e0">
+        <label for="bgImageInput">Background Image URL:</label>
+        <input type="text" id="bgImageInput" placeholder="Background Image URL">
+        <button id="applyBackgroundButton">Apply Background</button>
+    </div>
+
+    <div class="room"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const room = document.querySelector('.room');
+            const addImageButton = document.getElementById('addImageButton');
+            const imageUrlInput = document.getElementById('imageUrlInput');
+            const duplicateButton = document.getElementById('duplicateButton');
+            const removeButton = document.getElementById('removeButton');
+            const changeBgButton = document.getElementById('changeBgButton');
+            const resetBgButton = document.getElementById('resetBgButton');
+            const shapeOptionsButton = document.getElementById('shapeOptionsButton');
+            const addShapeButton = document.getElementById('addShapeButton');
+            const clearRoomButton = document.getElementById('clearRoomButton');
+            const shapeOptions = document.getElementById('shapeOptions');
+            const shapeSelect = document.getElementById('shapeSelect');
+            const colorSelect = document.getElementById('colorSelect');
+            const imageSelect = document.getElementById('imageSelect');
+            const backgroundOptions = document.getElementById('backgroundOptions');
+            const bgColorInput = document.getElementById('bgColorInput');
+            const bgImageInput = document.getElementById('bgImageInput');
+            const applyBackgroundButton = document.getElementById('applyBackgroundButton');
+            let selectedObject = null;
+
+            addImageButton.addEventListener('click', () => {
+                const imageUrl = imageUrlInput.value;
+                if (imageUrl) {
+                    const img = document.createElement('img');
+                    img.src = imageUrl;
+                    img.classList.add('object');
+                    img.style.width = '100px';
+                    img.style.height = '100px';
+                    img.style.top = '10px';
+                    img.style.left = '10px';
+                    img.draggable = true;
+
+                    room.appendChild(img);
+
+                    makeDraggable(img);
+                    imageUrlInput.value = '';
+                }
+            });
+
+            shapeOptionsButton.addEventListener('click', () => {
+                shapeOptions.style.display = shapeOptions.style.display === 'block' ? 'none' : 'block';
+            });
+
+            addShapeButton.addEventListener('click', () => {
+                const shapeType = shapeSelect.value;
+                const color = colorSelect.value;
+                const imageUrl = imageSelect.value;
+
+                const shape = document.createElement('div');
+                shape.classList.add('object');
+
+                if (shapeType === 'isosceles-trapezoid') {
+                    shape.classList.add('isosceles-trapezoid');
+                    shape.style.borderBottomColor = color;
+                } else {
+                    shape.classList.add(shapeType);
+                    shape.style.backgroundColor = color;
+                }
+
+                if (imageUrl) {
+                    shape.style.backgroundImage = `url(${imageUrl})`;
+                }
+
+                shape.style.width = '100px';
+                shape.style.height = '100px';
+                shape.style.top = '10px';
+                shape.style.left = '10px';
+
+                room.appendChild(shape);
+
+                makeDraggable(shape);
+                shapeOptions.style.display = 'none';
+            });
+
+            clearRoomButton.addEventListener('click', () => {
+                while (room.firstChild) {
+                    room.removeChild(room.firstChild);
+                }
+            });
+
+            duplicateButton.addEventListener('click', () => {
+                if (selectedObject) {
+                    const clone = selectedObject.cloneNode(true);
+                    clone.style.top = (parseInt(selectedObject.style.top) + 10) + 'px';
+                    clone.style.left = (parseInt(selectedObject.style.left) + 10) + 'px';
+                    room.appendChild(clone);
+                    makeDraggable(clone);
+                }
+            });
+
+            removeButton.addEventListener('click', () => {
+                if (selectedObject) {
+                    selectedObject.remove();
+                    selectedObject = null;
+                }
+            });
+
+            changeBgButton.addEventListener('click', () => {
+                backgroundOptions.style.display = 'block';
+            });
+
+            resetBgButton.addEventListener('click', () => {
+                room.style.backgroundColor = '#e0e0e0';
+                room.style.backgroundImage = '';
+            });
+
+            applyBackgroundButton.addEventListener('click', () => {
+                const color = bgColorInput.value;
+                const imageUrl = bgImageInput.value;
+
+                room.style.backgroundColor = color;
+                room.style.backgroundImage = imageUrl ? `url(${imageUrl})` : '';
+                backgroundOptions.style.display = 'none';
+            });
+
+            function makeDraggable(element) {
+                element.addEventListener('mousedown', (e) => {
+                    selectedObject = element;
+                    const rect = element.getBoundingClientRect();
+                    const offsetX = e.clientX - rect.left;
+                    const offsetY = e.clientY - rect.top;
+
+                    function onMouseMove(e) {
+                        element.style.left = (e.clientX - offsetX) + 'px';
+                        element.style.top = (e.clientY - offsetY) + 'px';
+                    }
+
+                    function onMouseUp() {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    }
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
